@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danica Milanovics – Könyvek</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 
 <body>
@@ -15,10 +17,8 @@
 
     <main>
 
-        <!-- Könyvek helye -->
         <div id="book-list" class="book-grid"></div>
 
-        <!-- Lapozás -->
         <div class="pagination">
             <button id="prev-btn" onclick="prevPage()">Előző</button>
             <span id="page-number">1 / 1</span>
@@ -28,5 +28,18 @@
     </main>
 
     <script src="/js/books.js"></script>
+
+    <script>
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+          if (!user) {
+            window.netlifyIdentity.on("login", () => {
+              // Amikor sikeresen regisztrálsz/belépsz, átirányít az admin mappába
+              document.location.href = "/admin/";
+            });
+          }
+        });
+      }
+    </script>
 </body>
 </html>
