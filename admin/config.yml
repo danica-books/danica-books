@@ -13,6 +13,8 @@ collections:
     format: "json"
     extension: "json"
     slug: "{{slug}}"
+    slug_encoding: "ascii"
+    slug_clean_accents: true
     fields:
       - { label: "Cím", name: "title", widget: "string" }
       - { label: "Leírás", name: "description", widget: "text" }
