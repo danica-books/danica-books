@@ -8,12 +8,12 @@ let currentPage = 1;
 async function loadBooks() {
     try {
         // 1) Könyvlista betöltése (Netlify-kompatibilis)
-        const list = await fetch('/data/books/index.json').then(r => r.json());
+        const list = await fetch('data/books/index.json').then(r => r.json());
 
         // 2) Minden könyv JSON betöltése
         books = [];
         for (const file of list) {
-            const data = await fetch(`/data/books/${file}`).then(r => r.json());
+            const data = await fetch(`data/books/${file}`).then(r => r.json());
             books.push(data);
         }
 
