@@ -8,7 +8,7 @@ display_url: "https://danica-books.github.io/danica-books"
 
 # Könyvenkénti almappa a borítóknak
 media_folder: "images/books/{{slug}}"
-public_folder: "images/books/{{slug}}"
+public_folder: "/images/books/{{slug}}"
 
 publish_mode: simple   # Kikapcsolja a draft/workflow módot → nincs több ghost entry
 
