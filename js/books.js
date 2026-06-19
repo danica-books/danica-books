@@ -7,17 +7,14 @@ let currentPage = 1;
 // Könyvek betöltése
 async function loadBooks() {
     try {
-        // 1) Könyvlista betöltése
-        const list = await fetch('/danica-books/data/books/index.json').then(r => r.json());
+        const list = await fetch('/data/books/index.json').then(r => r.json());
 
-        // 2) Minden könyv JSON betöltése
         books = [];
         for (const file of list.books) {
-            const data = await fetch(`/danica-books/data/books/${file}`).then(r => r.json());
+            const data = await fetch(`/data/books/${file}`).then(r => r.json());
             books.push(data);
         }
 
-        // 3) Könyvek kirenderelése
         renderBooks();
         updatePagination();
 
