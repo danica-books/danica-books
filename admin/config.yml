@@ -3,9 +3,7 @@ backend:
   repo: danica-books/danica-books
   branch: main
   auth_type: pkce
-  base_url: https://decap-oauth-proxy.netlify.app
-  auth_endpoint: auth
-  cms_label_prefix: "Danica Books"
+  app_id: Ov23livR0rVgO4SeyLkX
 
 media_folder: "images"
 public_folder: "/danica-books/images"
