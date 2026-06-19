@@ -43,7 +43,7 @@ function renderBooks() {
         div.className = "book-card";
 
         div.innerHTML = `
-            <img src="${book.cover}" alt="${book.title}">
+            <img src="./${book.cover}" alt="${book.title}">
             <h3>${book.title}</h3>
             <p>${book.description}</p>
             <a href="${book.download}" class="download-button" target="_blank">Letöltés (PDF)</a>
