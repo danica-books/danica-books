@@ -2,7 +2,7 @@ backend:
   name: github
   repo: danica-books/danica-books.github.io
   branch: main
-  base_url: https://github-decap-oauth.vercel.app
+  base_url: https://decap-cms-oauth-gate.vercel.app
 
 media_folder: "images"
 public_folder: "/images"
