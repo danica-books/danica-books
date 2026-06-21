@@ -42,7 +42,7 @@ function renderBooks() {
         div.innerHTML = `
             <img src="${book.cover}" alt="${book.title}">
             <h3>${book.title}</h3>
-            <p>${book.description}</p>
+            <p class="book-description">${book.description}</p>
             <a href="${book.download}" class="download-btn" target="_blank">Letöltés (PDF)</a>
         `;
 
