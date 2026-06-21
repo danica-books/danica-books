@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Könyv – Danica Milánovics</title>
+
+  <!-- Alap stílus -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    img.cover {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      background: #3498db;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .back {
+      display: inline-block;
+      margin-top: 30px;
+      color: #555;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1 id="title">Betöltés...</h1>
+  <img id="cover" class="cover" src="" alt="Borító" style="display:none;">
+  <p id="description"></p>
+  <div id="downloads"></div>
+
+  <a href="index.html" class="back">← Vissza a könyvekhez</a>
+</div>
+
+<script>
+  // 1) JSON fájl neve az URL-ből
+  const params = new URLSearchParams(window.location.search);
+  const file = params.get("file");
+
+  if (!file) {
+    document.getElementById("title").innerText = "Hiba: nincs megadva könyv.";
+  } else {
+    loadBook(file);
+  }
+
+  async function loadBook(fileName) {
+    try {
+      const res = await fetch("data/books/" + fileName);
+      if (!res.ok) throw new Error("A könyv nem található.");
+      const data = await res.json();
+
+      document.getElementById("title").innerText = data.title;
+      document.getElementById("description").innerText = data.description;
+
+      // Borító
+      if (data.cover) {
+        const cover = document.getElementById("cover");
+        cover.src = data.cover;
+        cover.style.display = "block";
+      }
+
+      // Letöltések
+      const downloads = document.getElementById("downloads");
+      downloads.innerHTML = "";
+
+      if (data.pdf) {
+        downloads.innerHTML += `<a class="btn" href="${data.pdf}" target="_blank">Letöltés (PDF)</a>`;
+      }
+
+      if (data.attachment) {
+        downloads.innerHTML += `<br><a class="btn" href="${data.attachment}" target="_blank">Melléklet letöltése</a>`;
+      }
+
+    } catch (e) {
+      document.getElementById("title").innerText = "Hiba történt";
+      document.getElementById("description").innerText = e.message;
+    }
+  }
+</script>
+
+</body>
+</html>
