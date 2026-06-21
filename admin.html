@@ -5,45 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Danica Könyvek – Admin</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f9; color: #333; padding: 20px; }
-    .container { max-width: 600px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 0 auto; }
-    h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-weight: bold; margin-bottom: 6px; color: #34495e; }
-    input[type="text"], textarea, input[type="password"] {
-      width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
-      box-sizing: border-box; font-size: 14px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+      padding: 20px;
     }
-    textarea { height: 100px; resize: vertical; }
-    input[type="file"] { margin-top: 5px; }
+    .container {
+      max-width: 600px;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #34495e;
+    }
+    input[type="text"],
+    textarea,
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    input[type="file"] {
+      margin-top: 5px;
+    }
     button {
-      width: 100%; background: #27ae60; color: white; padding: 12px; border: none;
-      border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer;
-      transition: background 0.2s; margin-top: 10px;
+      width: 100%;
+      background: #27ae60;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 10px;
     }
-    button:hover { background: #219653; }
+    button:hover {
+      background: #219653;
+    }
     #status {
-      margin-top: 20px; padding: 12px; border-radius: 4px; display: none;
-      text-align: center; font-weight: bold;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+      text-align: center;
+      font-weight: bold;
     }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    small {
+      display: block;
+      margin-top: 4px;
+      color: #777;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1>Danica Könyvek – Admin</h1>
-  
+
   <div class="form-group">
     <label for="token">GitHub Personal Access Token (Classic):</label>
     <input type="password" id="token" placeholder="ghp_..." oninput="saveToken()" />
-    <button onclick="clearToken()" style="background:#c0392b; margin-top:5px;">Token törlése</button>
+    <button type="button" onclick="clearToken()" style="background:#c0392b; margin-top:5px;">Token törlése</button>
+    <small id="tokenStatus"></small>
   </div>
 
   <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
 
-  <!-- Könyv szerkesztés -->
   <div class="form-group">
     <label for="editSelect">Könyv szerkesztése:</label>
     <select id="editSelect" onchange="loadBookForEdit()">
@@ -64,44 +127,81 @@
   <div class="form-group">
     <label for="coverFile">Borítókép kiválasztása (images/ mappa):</label>
     <input type="file" id="coverFile" accept="image/*" />
+    <small id="currentCoverInfo"></small>
   </div>
 
   <div class="form-group">
     <label for="pdfFile">PDF fájl kiválasztása:</label>
     <input type="file" id="pdfFile" accept=".pdf" />
+    <small id="currentPdfInfo"></small>
   </div>
 
-  <button id="saveBtn" onclick="saveBook()">Könyv mentése és feltöltése</button>
+  <button id="saveBtn" type="button" onclick="saveBook()">Könyv mentése és feltöltése</button>
 
   <div id="status"></div>
 </div>
 
 <script>
-  // Token automatikus betöltése + index.json betöltése
+  const REPO_OWNER = 'danica-books';
+  const REPO_NAME = 'danica-books.github.io';
+  const BRANCH = 'main';
+
+  let currentBookFile = null;
+  let currentCoverPath = null;
+  let currentPdfPath = null;
+
   window.addEventListener('DOMContentLoaded', async () => {
     const savedToken = localStorage.getItem('github_token');
-    if (savedToken) document.getElementById('token').value = savedToken;
+    if (savedToken) {
+      document.getElementById('token').value = savedToken;
+      setTokenStatus('Token betöltve a böngészőből.');
+    } else {
+      setTokenStatus('Nincs elmentett token.');
+    }
 
-    // Könyvlista betöltése
-    const indexFile = await fetch('data/books/index.json').then(r => r.json());
-    const select = document.getElementById('editSelect');
+    try {
+      const indexFile = await fetch('data/books/index.json').then(r => {
+        if (!r.ok) throw new Error('index.json nem érhető el');
+        return r.json();
+      });
 
-    indexFile.books.forEach(file => {
-      const opt = document.createElement('option');
-      opt.value = file;
-      opt.textContent = file.replace('.json', '');
-      select.appendChild(opt);
-    });
+      const select = document.getElementById('editSelect');
+      select.innerHTML = '<option value="">-- Válassz könyvet --</option>';
+
+      if (Array.isArray(indexFile.books)) {
+        indexFile.books.forEach(file => {
+          const opt = document.createElement('option');
+          opt.value = file;
+          opt.textContent = file.replace('.json', '');
+          select.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      showStatus('Hiba az index.json betöltésekor: ' + e.message, true);
+    }
   });
 
   function saveToken() {
-    localStorage.setItem('github_token', document.getElementById('token').value.trim());
+    const token = document.getElementById('token').value.trim();
+    if (token) {
+      localStorage.setItem('github_token', token);
+      setTokenStatus('Token elmentve a böngészőben.');
+    } else {
+      localStorage.removeItem('github_token');
+      setTokenStatus('Token törölve.');
+    }
   }
 
   function clearToken() {
     localStorage.removeItem('github_token');
     document.getElementById('token').value = '';
+    setTokenStatus('Token törölve a böngészőből.');
     showStatus('Token törölve a böngészőből.');
+  }
+
+  function setTokenStatus(text) {
+    const el = document.getElementById('tokenStatus');
+    el.textContent = text;
   }
 
   function showStatus(text, isError = false) {
@@ -115,7 +215,11 @@
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onload = () => {
+        const result = reader.result || '';
+        const parts = result.split(',');
+        resolve(parts[1] || '');
+      };
       reader.onerror = error => reject(error);
     });
   }
@@ -128,156 +232,182 @@
       .replace(/[íìîï]/g, 'i')
       .replace(/[óòôõöő]/g, 'o')
       .replace(/[úùûüű]/g, 'u')
-      .replace(/[cç]/g, 'c')
+      .replace(/[ç]/g, 'c')
       .replace(/[ñ]/g, 'n')
-      .replace(/[^a-z0-9_-]/g, '');
+      .replace(/[^a-z0-9\-]/g, '')
+      .replace(/\-+/g, '-');
   }
 
-  // Könyv betöltése szerkesztéshez
   async function loadBookForEdit() {
-    const file = document.getElementById('editSelect').value;
-    if (!file) return;
+    const select = document.getElementById('editSelect');
+    const file = select.value;
+    document.getElementById('currentCoverInfo').textContent = '';
+    document.getElementById('currentPdfInfo').textContent = '';
+    currentBookFile = null;
+    currentCoverPath = null;
+    currentPdfPath = null;
 
-    const book = await fetch(`data/books/${file}`).then(r => r.json());
+    if (!file) {
+      document.getElementById('title').value = '';
+      document.getElementById('description').value = '';
+      showStatus('', false);
+      return;
+    }
 
-    document.getElementById('title').value = book.title;
-    document.getElementById('description').value = book.description;
-    document.getElementById('coverFile').value = '';
-    document.getElementById('pdfFile').value = '';
+    try {
+      const res = await fetch('data/books/' + file);
+      if (!res.ok) throw new Error('A könyv JSON nem érhető el.');
+      const data = await res.json();
 
-    window.currentEditingFile = file;
+      currentBookFile = file;
+      currentCoverPath = data.cover || data.coverPath || null;
+      currentPdfPath = data.pdf || data.pdfPath || null;
 
-    showStatus(`"${file}" betöltve szerkesztésre.`);
+      document.getElementById('title').value = data.title || '';
+      document.getElementById('description').value = data.description || '';
+
+      if (currentCoverPath) {
+        document.getElementById('currentCoverInfo').textContent =
+          'Jelenlegi borító: ' + currentCoverPath + ' (nem változik, ha nem választasz új fájlt)';
+      }
+      if (currentPdfPath) {
+        document.getElementById('currentPdfInfo').textContent =
+          'Jelenlegi PDF: ' + currentPdfPath + ' (nem változik, ha nem választasz új fájlt)';
+      }
+
+      showStatus('"' + file + '" betöltve szerkesztésre.');
+    } catch (e) {
+      showStatus('Hiba a könyv betöltésekor: ' + e.message, true);
+    }
+  }
+
+  async function getFileSha(path, token) {
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}?ref=${BRANCH}`;
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + token
+      }
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Nem sikerült lekérni a fájl metaadatait: ' + res.status);
+    const json = await res.json();
+    return json.sha || null;
+  }
+
+  async function uploadFile(path, file, token) {
+    const content = await toBase64(file);
+    const sha = await getFileSha(path, token).catch(() => null);
+
+    const body = {
+      message: `Upload file ${path}`,
+      content: content,
+      branch: BRANCH
+    };
+    if (sha) body.sha = sha;
+
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Fájl feltöltési hiba (' + path + '): ' + res.status + ' ' + txt);
+    }
+
+    return path;
   }
 
   async function saveBook() {
     const token = document.getElementById('token').value.trim();
-    const title = document.getElementById('title').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const coverFile = document.getElementById('coverFile').files[0];
-    const pdfFile = document.getElementById('pdfFile').files[0];
-
-    if (!token || !title || !description) {
-      showStatus('Kérlek, töltsd ki a Tokent, a Címet és a Leírást!', true);
+    if (!token) {
+      showStatus('Hiányzik a GitHub token.', true);
       return;
     }
 
-    const saveBtn = document.getElementById('saveBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerText = 'Feltöltés folyamatban...';
-    showStatus('Kapcsolódás a GitHubhoz...');
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const coverFileInput = document.getElementById('coverFile');
+    const pdfFileInput = document.getElementById('pdfFile');
 
-    const repo = 'danica-books/danica-books.github.io';
-    const slug = slugify(title);
+    if (!title) {
+      showStatus('A cím mező kötelező.', true);
+      return;
+    }
 
     try {
-      let coverPath = "";
-      if (coverFile) {
-        const coverBase64 = await toBase64(coverFile);
-        coverPath = `images/${slug}-${coverFile.name}`;
+      showStatus('Mentés folyamatban...');
 
-        await fetch(`https://api.github.com/repos/${repo}/contents/${coverPath}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Admin: Borítókép feltöltése (${title})`,
-            content: coverBase64,
-            branch: 'main'
-          })
-        });
+      let fileName;
+      if (currentBookFile) {
+        fileName = currentBookFile;
+      } else {
+        const slug = slugify(title);
+        fileName = slug + '.json';
       }
 
-      let pdfPath = "";
-      if (pdfFile) {
-        const pdfBase64 = await toBase64(pdfFile);
-        pdfPath = `pdf/${slug}-${pdfFile.name}`;
+      const baseSlug = slugify(title);
 
-        await fetch(`https://api.github.com/repos/${repo}/contents/${pdfPath}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Admin: PDF feltöltése (${title})`,
-            content: pdfBase64,
-            branch: 'main'
-          })
-        });
+      let coverPath = currentCoverPath || null;
+      let pdfPath = currentPdfPath || null;
+
+      if (coverFileInput.files && coverFileInput.files[0]) {
+        const coverFile = coverFileInput.files[0];
+        const ext = coverFile.name.split('.').pop().toLowerCase();
+        const coverTargetPath = `images/${baseSlug}-cover.${ext}`;
+        coverPath = await uploadFile(coverTargetPath, coverFile, token);
       }
 
-      // JSON létrehozása
-      const bookData = {
+      if (pdfFileInput.files && pdfFileInput.files[0]) {
+        const pdfFile = pdfFileInput.files[0];
+        const pdfTargetPath = `pdf/${baseSlug}.pdf`;
+        pdfPath = await uploadFile(pdfTargetPath, pdfFile, token);
+      }
+
+      const bookJson = {
         title: title,
         description: description,
-        cover: coverPath ? `/${coverPath}` : undefined,
-        download: pdfPath ? `/${pdfPath}` : undefined
+        cover: coverPath,
+        pdf: pdfPath
       };
 
-      const safeJson = JSON.stringify(bookData, null, 2);
-      const jsonContent = btoa(unescape(encodeURIComponent(safeJson)));
+      const jsonString = JSON.stringify(bookJson, null, 2);
+      const jsonBase64 = btoa(unescape(encodeURIComponent(jsonString)));
 
-      const jsonPath = window.currentEditingFile
-        ? `data/books/${window.currentEditingFile}`
-        : `data/books/${slug}.json`;
+      const bookPath = `data/books/${fileName}`;
+      const existingSha = await getFileSha(bookPath, token).catch(() => null);
 
-      const jsonResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${jsonPath}`, {
+      const body = {
+        message: `Update book ${fileName}`,
+        content: jsonBase64,
+        branch: BRANCH
+      };
+      if (existingSha) body.sha = existingSha;
+
+      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(bookPath)}`;
+      const res = await fetch(url, {
         method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: window.currentEditingFile
-            ? `Admin: Könyv szerkesztése (${title})`
-            : `Admin: Új könyv hozzáadása (${title})`,
-          content: jsonContent,
-          branch: 'main'
-        })
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(body)
       });
 
-      if (!jsonResponse.ok) {
-        const errData = await jsonResponse.json();
-        showStatus(`Hiba történt a JSON mentésekor: ${errData.message}`, true);
-        saveBtn.disabled = false;
-        saveBtn.innerText = 'Könyv mentése és feltöltése';
-        return;
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('Hiba történt a JSON mentésekor: ' + res.status + ' ' + txt);
       }
 
-      // index.json frissítése (csak új könyvnél)
-      if (!window.currentEditingFile) {
-        showStatus('index.json frissítése...');
-
-        const indexPath = 'data/books/index.json';
-        const indexFile = await fetch(`https://api.github.com/repos/${repo}/contents/${indexPath}`, {
-          headers: { 'Authorization': `token ${token}` }
-        }).then(r => r.json());
-
-        const indexContent = JSON.parse(atob(indexFile.content));
-        indexContent.books.push(`${slug}.json`);
-
-        const updatedIndex = btoa(unescape(encodeURIComponent(JSON.stringify(indexContent, null, 2))));
-
-        await fetch(`https://api.github.com/repos/${repo}/contents/${indexPath}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Admin: index frissítése (${title})`,
-            content: updatedIndex,
-            sha: indexFile.sha,
-            branch: 'main'
-          })
-        });
-      }
-
-      showStatus('Sikeres mentés! A könyv frissült.');
-      window.currentEditingFile = null;
-
-      document.getElementById('title').value = '';
-      document.getElementById('description').value = '';
-      document.getElementById('coverFile').value = '';
-      document.getElementById('pdfFile').value = '';
-      document.getElementById('editSelect').value = '';
-
-    } catch (error) {
-      showStatus(`Hiba a folyamat során: ${error.message}`, true);
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.innerText = 'Könyv mentése és feltöltése';
+      showStatus('Könyv sikeresen mentve: ' + fileName);
+    } catch (e) {
+      showStatus(e.message, true);
     }
   }
 </script>
