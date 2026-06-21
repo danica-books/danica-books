@@ -12,6 +12,7 @@ async function loadBooks() {
         books = [];
         for (const file of list.books) {
             const data = await fetch(`/data/books/${file}`).then(r => r.json());
+            data.file = file; // ← JSON fájl neve eltárolva
             books.push(data);
         }
 
@@ -41,7 +42,13 @@ function renderBooks() {
 
         div.innerHTML = `
             <img src="${book.cover}" alt="${book.title}">
-            <h3>${book.title}</h3>
+
+            <h3>
+                <a href="book.html?file=${encodeURIComponent(book.file)}">
+                    ${book.title}
+                </a>
+            </h3>
+
             <p class="book-description">${book.description}</p>
 
             <a href="${book.download}" class="download-btn" target="_blank">
